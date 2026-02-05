@@ -1,7 +1,7 @@
 import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
-  appName: 'random-picker',
+  appName: 'random-picker1',
   web: {
     host: '0.0.0.0',
     port: 3002,
