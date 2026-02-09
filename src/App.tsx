@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import RouletteMode from './components/RouletteMode';
 import NumberPickMode from './components/NumberPickMode';
 import TeamDividerMode from './components/TeamDividerMode';
@@ -14,30 +14,21 @@ const TABS: { key: Mode; label: string; icon: string }[] = [
 
 export default function App() {
   const [mode, setMode] = useState<Mode>('roulette');
-  const [lastResult, setLastResult] = useState<string | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { showInterstitialAd } = useInterstitialAd();
+  const adShownRef = useRef(new Set<string>());
 
-  const handleShowResult = (result: string) => {
-    setLastResult(result);
-  };
-
-  const handleReset = () => {
-    setShowResetConfirm(true);
-  };
-
-  const confirmReset = () => {
-    showInterstitialAd({
-      onDismiss: () => {
-        setLastResult(null);
-        setShowResetConfirm(false);
-        // Force re-render by toggling mode
-        const current = mode;
-        setMode('roulette');
-        setTimeout(() => setMode(current), 0);
-      },
-    });
-  };
+  const makeTryWithAd = useCallback((modeKey: string) => (callback: () => void) => {
+    if (!adShownRef.current.has(modeKey)) {
+      showInterstitialAd({
+        onDismiss: () => {
+          adShownRef.current.add(modeKey);
+          callback();
+        },
+      });
+    } else {
+      callback();
+    }
+  }, [showInterstitialAd]);
 
   return (
     <div className="app-container">
@@ -55,10 +46,7 @@ export default function App() {
           <button
             key={tab.key}
             className={`tab-item ${mode === tab.key ? 'active' : ''}`}
-            onClick={() => {
-              setMode(tab.key);
-              setLastResult(null);
-            }}
+            onClick={() => setMode(tab.key)}
           >
             <i className={tab.icon} />
             <span>{tab.label}</span>
@@ -68,44 +56,10 @@ export default function App() {
 
       {/* Mode content */}
       <main className="main-content">
-        {mode === 'roulette' && <RouletteMode onShowResult={handleShowResult} />}
-        {mode === 'number' && <NumberPickMode onShowResult={handleShowResult} />}
-        {mode === 'team' && <TeamDividerMode onShowResult={handleShowResult} />}
+        {mode === 'roulette' && <RouletteMode tryWithAd={makeTryWithAd('roulette')} />}
+        {mode === 'number' && <NumberPickMode tryWithAd={makeTryWithAd('number')} />}
+        {mode === 'team' && <TeamDividerMode tryWithAd={makeTryWithAd('team')} />}
       </main>
-
-      {/* Reset button (AD) */}
-      {lastResult && (
-        <div className="reset-section">
-          <button className="reset-btn" onClick={handleReset}>
-            <i className="ri-refresh-line" />
-            다시 하기
-            <span className="ad-badge">AD</span>
-          </button>
-          <p className="ad-notice">광고 시청 후 새로운 선택을 시작합니다</p>
-        </div>
-      )}
-
-      {/* Reset confirm modal */}
-      {showResetConfirm && (
-        <div className="modal-overlay" onClick={() => setShowResetConfirm(false)}>
-          <div className="modal-content modal-small" onClick={(e) => e.stopPropagation()}>
-            <div className="confirm-icon">
-              <i className="ri-refresh-line" />
-            </div>
-            <h3 className="confirm-title">다시 시작할까요?</h3>
-            <p className="confirm-desc">광고 시청 후 새로운 선택을 시작합니다.</p>
-            <div className="confirm-actions">
-              <button className="confirm-cancel" onClick={() => setShowResetConfirm(false)}>
-                취소
-              </button>
-              <button className="confirm-ok" onClick={confirmReset}>
-                <span className="ad-badge-dark">AD</span>
-                확인
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

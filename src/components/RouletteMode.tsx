@@ -3,10 +3,10 @@ import { pickRandom } from '../utils/random';
 import PresetModal from './PresetModal';
 
 interface RouletteModeProps {
-  onShowResult: (result: string) => void;
+  tryWithAd: (callback: () => void) => void;
 }
 
-export default function RouletteMode({ onShowResult }: RouletteModeProps) {
+export default function RouletteMode({ tryWithAd }: RouletteModeProps) {
   const [items, setItems] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [spinning, setSpinning] = useState(false);
@@ -33,7 +33,7 @@ export default function RouletteMode({ onShowResult }: RouletteModeProps) {
     }
   };
 
-  const spin = useCallback(() => {
+  const doSpin = useCallback(() => {
     if (items.length < 2 || spinRef.current) return;
     spinRef.current = true;
     setSpinning(true);
@@ -42,7 +42,6 @@ export default function RouletteMode({ onShowResult }: RouletteModeProps) {
     const selected = pickRandom(items, 1)[0];
     const selectedIndex = items.indexOf(selected);
     const segmentAngle = 360 / items.length;
-    // Spin several full rotations + land on the selected segment
     const targetAngle = 360 * (5 + Math.random() * 3) - (selectedIndex * segmentAngle + segmentAngle / 2);
     const newRotation = rotation + targetAngle;
     setRotation(newRotation);
@@ -51,9 +50,17 @@ export default function RouletteMode({ onShowResult }: RouletteModeProps) {
       setSpinning(false);
       setResult(selected);
       spinRef.current = false;
-      onShowResult(selected);
     }, 3500);
-  }, [items, rotation, onShowResult]);
+  }, [items, rotation]);
+
+  const spin = useCallback(() => {
+    if (items.length < 2 || spinRef.current) return;
+    if (result !== null) {
+      tryWithAd(doSpin);
+    } else {
+      doSpin();
+    }
+  }, [items, result, tryWithAd, doSpin]);
 
   const segmentAngle = items.length > 0 ? 360 / items.length : 360;
 
@@ -185,10 +192,14 @@ export default function RouletteMode({ onShowResult }: RouletteModeProps) {
         ) : (
           <>
             <i className="ri-play-circle-line" />
-            {items.length < 2 ? '2개 이상 항목을 추가하세요' : '돌리기'}
+            {items.length < 2 ? '2개 이상 항목을 추가하세요' : result ? '다시 돌리기' : '돌리기'}
+            {result && <span className="ad-badge">AD</span>}
           </>
         )}
       </button>
+      {result && !spinning && (
+        <p className="ad-notice">광고 시청 후 다시 돌릴 수 있어요</p>
+      )}
 
       <PresetModal
         open={presetOpen}

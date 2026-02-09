@@ -2,12 +2,12 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { pickNumbers } from '../utils/random';
 
 interface NumberPickModeProps {
-  onShowResult: (result: string) => void;
+  tryWithAd: (callback: () => void) => void;
 }
 
 const COUNT_OPTIONS = [1, 2, 3, 5, 10];
 
-export default function NumberPickMode({ onShowResult }: NumberPickModeProps) {
+export default function NumberPickMode({ tryWithAd }: NumberPickModeProps) {
   const [min, setMin] = useState(1);
   const [max, setMax] = useState(100);
   const [count, setCount] = useState(1);
@@ -24,7 +24,7 @@ export default function NumberPickMode({ onShowResult }: NumberPickModeProps) {
     };
   }, []);
 
-  const pick = useCallback(() => {
+  const doPick = useCallback(() => {
     if (picking) return;
     const range = max - min + 1;
     if (range < 1 || min > max) return;
@@ -33,7 +33,6 @@ export default function NumberPickMode({ onShowResult }: NumberPickModeProps) {
     setPicking(true);
     setResult(null);
 
-    // Number cycling animation
     let speed = 50;
     let elapsed = 0;
     const totalDuration = 2000;
@@ -46,20 +45,27 @@ export default function NumberPickMode({ onShowResult }: NumberPickModeProps) {
       elapsed += speed;
 
       if (elapsed < totalDuration) {
-        speed = Math.min(speed + 8, 300); // Gradually slow down
+        speed = Math.min(speed + 8, 300);
         intervalRef.current = setTimeout(cycle, speed) as any;
       } else {
-        // Final result
         const finalNumbers = pickNumbers(min, max, actualCount);
         setDisplayNumbers(finalNumbers);
         setResult(finalNumbers);
         setPicking(false);
-        onShowResult(finalNumbers.join(', '));
       }
     };
 
     cycle();
-  }, [min, max, count, picking, onShowResult]);
+  }, [min, max, count, picking]);
+
+  const pick = useCallback(() => {
+    if (picking) return;
+    if (result !== null) {
+      tryWithAd(doPick);
+    } else {
+      doPick();
+    }
+  }, [picking, result, tryWithAd, doPick]);
 
   const range = max - min + 1;
   const isValid = range >= 1 && min <= max;
@@ -144,10 +150,14 @@ export default function NumberPickMode({ onShowResult }: NumberPickModeProps) {
         ) : (
           <>
             <i className="ri-hashtag" />
-            뽑기
+            {result ? '다시 뽑기' : '뽑기'}
+            {result && <span className="ad-badge">AD</span>}
           </>
         )}
       </button>
+      {result && !picking && (
+        <p className="ad-notice">광고 시청 후 다시 뽑을 수 있어요</p>
+      )}
     </div>
   );
 }

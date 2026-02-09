@@ -56,3 +56,45 @@ export function deleteCustomPreset(id: string): void {
 export function getAllPresets(): Preset[] {
   return [...DEFAULT_PRESETS, ...loadCustomPresets()];
 }
+
+// ── Team Group (팀 나누기 전용) ──
+
+const TEAM_STORAGE_KEY = 'random-picker-team-groups';
+
+export const DEFAULT_TEAM_PRESETS: Preset[] = [
+  {
+    id: 'default-team-1',
+    name: '팀 예시 (8명)',
+    items: ['김철수', '이영희', '박민수', '정수진', '최동현', '한지은', '오승우', '강미래'],
+    isDefault: true,
+  },
+];
+
+export function loadTeamGroups(): Preset[] {
+  try {
+    const data = localStorage.getItem(TEAM_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveTeamGroup(preset: Omit<Preset, 'id'>): Preset {
+  const groups = loadTeamGroups();
+  const newGroup: Preset = {
+    ...preset,
+    id: `team-${Date.now()}`,
+  };
+  groups.push(newGroup);
+  localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(groups));
+  return newGroup;
+}
+
+export function deleteTeamGroup(id: string): void {
+  const groups = loadTeamGroups().filter((p) => p.id !== id);
+  localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(groups));
+}
+
+export function getAllTeamGroups(): Preset[] {
+  return [...DEFAULT_TEAM_PRESETS, ...loadTeamGroups()];
+}

@@ -1,13 +1,13 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { GoogleAdMob } from '@apps-in-toss/web-framework';
 
-const TEST_AD_GROUP_ID = 'ait-ad-test-interstitial-id';
+const AD_GROUP_ID = 'ait.v2.live.979576ca21a94432';
 
 interface InterstitialAdCallback {
   onDismiss?: () => void;
 }
 
-export function useInterstitialAd(adGroupId: string = TEST_AD_GROUP_ID) {
+export function useInterstitialAd(adGroupId: string = AD_GROUP_ID) {
   const [loading, setLoading] = useState(true);
   const [adSupported, setAdSupported] = useState(true);
   const dismissCallbackRef = useRef<(() => void) | undefined>();
