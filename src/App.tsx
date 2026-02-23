@@ -2,7 +2,10 @@ import { useState, useCallback, useRef } from 'react';
 import RouletteMode from './components/RouletteMode';
 import NumberPickMode from './components/NumberPickMode';
 import TeamDividerMode from './components/TeamDividerMode';
+import BannerAd from './components/BannerAd';
 import { useInterstitialAd } from './hooks/useInterstitialAd';
+
+const BANNER_AD_ID = 'ait.v2.live.ac048eabb7cf44f7';
 
 type Mode = 'roulette' | 'number' | 'team';
 
@@ -60,6 +63,11 @@ export default function App() {
         {mode === 'number' && <NumberPickMode tryWithAd={makeTryWithAd('number')} />}
         {mode === 'team' && <TeamDividerMode tryWithAd={makeTryWithAd('team')} />}
       </main>
+
+      {/* Banner Ad */}
+      <div style={{ padding: '12px 16px 16px' }}>
+        <BannerAd adGroupId={BANNER_AD_ID} />
+      </div>
     </div>
   );
 }
